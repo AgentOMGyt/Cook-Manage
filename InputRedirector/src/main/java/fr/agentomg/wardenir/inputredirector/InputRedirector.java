@@ -3,6 +3,7 @@ package fr.agentomg.wardenir.inputredirector;
 import fr.agentomg.wardenir.inputredirector.command.CommandManager;
 import fr.agentomg.wardenir.inputredirector.event.EventManager;
 import fr.agentomg.wardenir.inputredirector.manager.GateManager;
+import fr.agentomg.wardenir.inputredirector.manager.GateSaveManager;
 import fr.agentomg.wardenir.inputredirector.manager.MobManager;
 import fr.agentomg.wardenir.inputredirector.manager.PigGuiManager;
 import fr.agentomg.wardenir.inputredirector.manager.PlayerStateManager;
@@ -16,6 +17,7 @@ public class InputRedirector extends JavaPlugin {
     private PlayerStateManager playerStateManager;
     private MobManager mobManager;
     private GateManager gateManager;
+    private GateSaveManager gateSaveManager;
     private PigGuiManager pigGuiManager;
     private CommandManager commandManager;
     private EventManager eventManager;
@@ -36,18 +38,28 @@ public class InputRedirector extends JavaPlugin {
         // Démarrage des tâches
         startTasks();
 
-        // Chargement des cochons sauvegardés (après un délai pour s'assurer que le monde est chargé)
+        // Chargement des données sauvegardées (après un délai pour s'assurer que le monde est chargé)
         Bukkit.getScheduler().runTaskLater(this, () -> {
+            // Chargement des cochons
             pigGuiManager.loadPigs();
+
+            // Chargement des gates
+            gateSaveManager.loadGate();
+
             getLogger().info("Plugin InputRedirector activé avec succès !");
         }, 20L); // 1 seconde de délai
     }
 
     @Override
     public void onDisable() {
-        // Sauvegarde des cochons avant l'arrêt
-        getLogger().info("Sauvegarde des cochons en cours...");
+        // Sauvegarde des données avant l'arrêt
+        getLogger().info("Sauvegarde des données en cours...");
+
+        // Sauvegarde des cochons
         pigGuiManager.savePigs();
+
+        // Sauvegarde des gates
+        gateSaveManager.saveGate();
 
         // Nettoyage
         cleanupOnDisable();
@@ -59,6 +71,7 @@ public class InputRedirector extends JavaPlugin {
         playerStateManager = new PlayerStateManager();
         mobManager = new MobManager();
         gateManager = new GateManager();
+        gateSaveManager = new GateSaveManager(this, gateManager);
         pigGuiManager = new PigGuiManager();
 
         // Initialiser le PigGuiManager avec le plugin pour la sauvegarde
@@ -78,7 +91,8 @@ public class InputRedirector extends JavaPlugin {
         // Tâche de sauvegarde automatique toutes les 5 minutes
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
             pigGuiManager.savePigs();
-            getLogger().info("Sauvegarde automatique des cochons effectuée");
+            gateSaveManager.saveGate();
+            getLogger().info("Sauvegarde automatique effectuée (cochons + gates)");
         }, 6000L, 6000L); // 5 minutes
     }
 
@@ -108,5 +122,6 @@ public class InputRedirector extends JavaPlugin {
     public PlayerStateManager getPlayerStateManager() { return playerStateManager; }
     public MobManager getMobManager() { return mobManager; }
     public GateManager getGateManager() { return gateManager; }
+    public GateSaveManager getGateSaveManager() { return gateSaveManager; }
     public PigGuiManager getPigGuiManager() { return pigGuiManager; }
 }
