@@ -1,0 +1,25 @@
+name: InputRedirector
+version: 1.0.0
+main: fr.agentomg.wardenir.inputredirector.InputRedirector
+api-version: 1.21
+depend: [MythicMobs]
+
+commands:
+  inputredirector:
+    description: Commande principale pour activer/désactiver la redirection
+    usage: /inputredirector
+  four:
+    description: Spawne un cochon avec GUI de four
+    usage: /four
+  gate:
+    description: Définit la position de la gate
+    usage: /gate
+    permission: wardenir.gate
+  debugpigs:
+    description: Affiche les informations de debug sur les cochons
+    usage: /debugpigs
+
+permissions:
+  wardenir.gate:
+    description: Permission pour utiliser la commande gate
+    default: op
