@@ -31,7 +31,7 @@ public class CommandManager {
         this.pigGuiManager = pigGuiManager;
 
         this.fourCommand = new FourCommand(pigGuiManager);
-        this.gateCommand = new GateCommand(gateManager);
+        this.gateCommand = new GateCommand(gateManager, plugin); // Passer le plugin ici
         this.debugPigsCommand = new DebugPigsCommand(pigGuiManager);
         this.mainCommand = new MainCommand(plugin, playerStateManager, mobManager);
     }
