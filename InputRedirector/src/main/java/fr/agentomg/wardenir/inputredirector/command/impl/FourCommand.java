@@ -27,6 +27,7 @@ public class FourCommand implements CommandExecutor {
         Pig pig = player.getWorld().spawn(loc, Pig.class);
         pig.setAI(false);
         pig.setInvulnerable(true);
+        pig.setInvisible(true);
         pig.setCustomName("FourPig");
         pig.setCustomNameVisible(false);
 
