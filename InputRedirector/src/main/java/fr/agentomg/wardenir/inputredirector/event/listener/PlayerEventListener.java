@@ -12,7 +12,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.*;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
 
 import java.util.UUID;
 
@@ -60,26 +64,153 @@ public class PlayerEventListener implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            Player player = event.getPlayer();
-            player.sendMessage("§e[DEBUG] Interaction détectée.");
+        Player player = event.getPlayer();
+        UUID playerId = player.getUniqueId();
 
-            pigGuiManager.handlePigGui(player, mobManager);
+        // Si le joueur est en mode redirection, gérer les interactions spéciales
+        if (playerStateManager.isFrozen(playerId)) {
+            if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                player.sendMessage("§e[DEBUG] Interaction détectée en mode redirection.");
+                pigGuiManager.handlePigGui(player, mobManager);
+            }
+            // Annuler toutes les interactions en mode redirection
+            event.setCancelled(true);
+        }
+        // En mode normal, laisser les interactions se faire normalement (ne pas annuler)
+    }
+
+    // === RESTRICTIONS EN MODE REDIRECTION ===
+
+    @EventHandler
+    public void onBlockPlace(BlockPlaceEvent event) {
+        Player player = event.getPlayer();
+        UUID playerId = player.getUniqueId();
+
+        // Empêcher de poser des blocs en mode redirection
+        if (playerStateManager.isFrozen(playerId)) {
+            event.setCancelled(true);
+            player.sendMessage("§cVous ne pouvez pas poser de blocs en mode redirection !");
+        }
+    }
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        Player player = event.getPlayer();
+        UUID playerId = player.getUniqueId();
+
+        // Empêcher de casser des blocs en mode redirection
+        if (playerStateManager.isFrozen(playerId)) {
+            event.setCancelled(true);
+            player.sendMessage("§cVous ne pouvez pas casser de blocs en mode redirection !");
+        }
+    }
+
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player)) return;
+
+        Player player = (Player) event.getWhoClicked();
+        UUID playerId = player.getUniqueId();
+
+        // Empêcher les clics d'inventaire en mode redirection (sauf les GUIs du plugin)
+        if (playerStateManager.isFrozen(playerId)) {
+            // Vérifier si c'est un GUI du plugin (cochon)
+            boolean isPigGui = pigGuiManager.getPigInventories().values().contains(event.getInventory());
+
+            if (!isPigGui) {
+                event.setCancelled(true);
+                player.sendMessage("§cVous ne pouvez pas utiliser votre inventaire en mode redirection !");
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPlayerDropItem(PlayerDropItemEvent event) {
+        Player player = event.getPlayer();
+        UUID playerId = player.getUniqueId();
+
+        // Empêcher de jeter des objets en mode redirection
+        if (playerStateManager.isFrozen(playerId)) {
+            event.setCancelled(true);
+            player.sendMessage("§cVous ne pouvez pas jeter d'objets en mode redirection !");
+        }
+    }
+
+    @EventHandler
+    public void onPlayerPickupItem(PlayerPickupItemEvent event) {
+        Player player = event.getPlayer();
+        UUID playerId = player.getUniqueId();
+
+        // Empêcher de ramasser des objets en mode redirection
+        if (playerStateManager.isFrozen(playerId)) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler
-    public void onSwapHandItems(PlayerSwapHandItemsEvent e) {
-        if (playerStateManager.isFrozen(e.getPlayer().getUniqueId()))
-            e.setCancelled(true);
+    public void onPlayerDamage(EntityDamageEvent event) {
+        if (!(event.getEntity() instanceof Player)) return;
+
+        Player player = (Player) event.getEntity();
+        UUID playerId = player.getUniqueId();
+
+        // Empêcher les dégâts en mode redirection
+        if (playerStateManager.isFrozen(playerId)) {
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler
-    public void onPlayerToggleSneak(PlayerToggleSneakEvent e) {
-        if (playerStateManager.isFrozen(e.getPlayer().getUniqueId())) {
-            e.setCancelled(true);
-            e.getPlayer().setSneaking(false);
+    public void onPlayerChat(AsyncPlayerChatEvent event) {
+        Player player = event.getPlayer();
+        UUID playerId = player.getUniqueId();
+
+        // Empêcher le chat en mode redirection (optionnel)
+        if (playerStateManager.isFrozen(playerId)) {
+            event.setCancelled(true);
+            player.sendMessage("§cVous ne pouvez pas parler en mode redirection !");
+        }
+    }
+
+    @EventHandler
+    public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
+        Player player = event.getPlayer();
+        UUID playerId = player.getUniqueId();
+
+        // Empêcher la plupart des commandes en mode redirection
+        if (playerStateManager.isFrozen(playerId)) {
+            String command = event.getMessage().toLowerCase();
+
+            // Autoriser certaines commandes de base
+            if (!command.startsWith("/help") &&
+                    !command.startsWith("/list") &&
+                    !command.startsWith("/who") &&
+                    !command.startsWith("/inputredirector")) { // Autoriser les commandes du plugin
+
+                event.setCancelled(true);
+                player.sendMessage("§cVous ne pouvez pas utiliser cette commande en mode redirection !");
+            }
+        }
+    }
+
+    @EventHandler
+    public void onSwapHandItems(PlayerSwapHandItemsEvent event) {
+        Player player = event.getPlayer();
+        UUID playerId = player.getUniqueId();
+
+        if (playerStateManager.isFrozen(playerId)) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerToggleSneak(PlayerToggleSneakEvent event) {
+        Player player = event.getPlayer();
+        UUID playerId = player.getUniqueId();
+
+        if (playerStateManager.isFrozen(playerId)) {
+            event.setCancelled(true);
+            player.setSneaking(false);
         }
     }
 }
