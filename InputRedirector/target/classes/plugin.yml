@@ -1,0 +1,53 @@
+name: InputRedirector
+version: 1.0.0
+main: fr.agentomg.wardenir.inputredirector.InputRedirector
+api-version: 1.21
+depend: [MythicMobs]
+
+commands:
+  inputredirector:
+    description: Commande principale du plugin
+    usage: /<command>
+    aliases: [ir, redirect]
+
+  four:
+    description: Créer un cochon avec interface de four
+    usage: /<command>
+    permission: wardenir.four
+
+  gate:
+    description: Gérer les gates de téléportation
+    usage: /<command> [remove|info|tp|reload|save|list|create]
+    permission: wardenir.gate
+    aliases: [gates]
+
+  debugpigs:
+    description: Débugger les cochons avec GUI
+    usage: /<command>
+    permission: wardenir.debug
+
+permissions:
+  wardenir.*:
+    description: Toutes les permissions du plugin
+    default: op
+    children:
+      wardenir.four: true
+      wardenir.gate: true
+      wardenir.debug: true
+      wardenir.redirect: true
+
+  wardenir.four:
+    description: Permet de créer des cochons avec interface
+    default: op
+
+  wardenir.gate:
+    description: Permet de gérer les gates
+    default: op
+
+  wardenir.debug:
+    description: Permet d'utiliser les commandes de debug
+    default: op
+
+  wardenir.redirect:
+    description: Permet d'utiliser la redirection
+    default: op
